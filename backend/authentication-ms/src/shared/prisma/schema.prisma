@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id_user        Int       @id @default(autoincrement()) @map("id_user")
+  first_name     String    @map("first_name") @db.VarChar(100)
+  last_name      String    @map("last_name") @db.VarChar(100)
+  email          String    @unique @map("email") @db.VarChar(100)
+  address        String    @map("address") @db.VarChar(100)
+  phone          String    @map("phone") @db.VarChar(100)
+  password       String    @map("password") @db.VarChar(100)
+  identification String    @unique @map("identification") @db.VarChar(100)
+  token          String?   @map("token") @db.Text
+  Selling        Selling[]
+
+  @@map("users")
+}
+
+model Product {
+  id_product           Int           @id @default(autoincrement()) @map("id_product")
+  code                 String        @unique @map("code") @db.VarChar(100)
+  name                 String        @unique @map("name") @db.VarChar(100)
+  description          String        @map("description") @db.Text
+  quantity             Int           @map("quantity") @db.Int
+  iva                  Float         @map("iva") @db.Float
+  mark                 String        @map("mark") @db.VarChar(100)
+  percentage_increment Float         @map("percentage_increment") @db.Float
+  public_price         Float         @map("public_price") @db.Float
+  suppler_price        Float         @map("suppler_price") @db.Float
+  SellingItem          SellingItem[]
+
+  @@map("product")
+}
+
+model Selling {
+  id_selling   Int           @id @default(autoincrement()) @map("id_selling")
+  id_user      Int           @map("id_user") @db.Int
+  iva          Float         @map("iva") @db.Float
+  sub_total    Float         @map("sub_total") @db.Float
+  total        Float         @map("total") @db.Float
+  selling_code String        @unique @map("selling_code") @db.VarChar(100)
+  selling_date DateTime      @map("selling_date") @db.DateTime
+  status       String        @map("status") @db.VarChar(100)
+  SellingItem  SellingItem[]
+  Returns      Returns[]
+
+  user User @relation(fields: [id_user], references: [id_user])
+
+  @@map("selling")
+}
+
+model SellingItem {
+  id_selling_item Int   @id @default(autoincrement()) @map("id_selling_item")
+  id_selling      Int   @map("id_selling") @db.Int
+  id_product      Int   @map("id_product") @db.Int
+  quantity        Int   @map("quantity") @db.Int
+  iva             Float @map("iva") @db.Float
+  unit_price      Float @map("unit_price") @db.Float
+  total_price     Float @map("total_price") @db.Float
+  subtotal        Float @map("subtotal") @db.Float
+
+  selling Selling @relation(fields: [id_selling], references: [id_selling])
+  product Product @relation(fields: [id_product], references: [id_product])
+
+  @@map("selling_items")
+}
+
+model Returns {
+  id_return   Int      @id @default(autoincrement()) @map("id_return")
+  reason      String   @map("reason") @db.Text
+  id_selling  Int      @map("id_selling") @db.Int
+  return_date DateTime @map("return_date") @db.DateTime
+  status      String   @map("status") @db.VarChar(100)
+
+  selling Selling @relation(fields: [id_selling], references: [id_selling])
+
+  @@map("returns")
+}
