@@ -38,7 +38,7 @@ model Product {
   mark                 String        @map("mark") @db.VarChar(100)
   percentage_increment Float         @map("percentage_increment") @db.Float
   public_price         Float         @map("public_price") @db.Float
-  suppler_price        Float         @map("suppler_price") @db.Float
+  supplier_price       Float         @map("supplier_price") @db.Float
   SellingItem          SellingItem[]
 
   @@map("product")
