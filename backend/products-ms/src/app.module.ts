@@ -1,10 +1,15 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { HomeModule } from './app/module/app.module';
+import { ProductModuleUsingPrisma } from './modules/products/infrastructure/module/product.module';
+import { GlobalExceptionFilter } from './shared/errors/exception/GlobalExceptionHandler';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [HomeModule, ProductModuleUsingPrisma],
+  providers: [
+    {
+      provide: 'APP_FILTER',
+      useClass: GlobalExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}
