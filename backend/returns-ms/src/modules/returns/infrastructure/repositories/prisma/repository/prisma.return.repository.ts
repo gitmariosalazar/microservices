@@ -1,10 +1,9 @@
 import { statusCode } from '../../../../../../settings/environments/status-code';
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { ReturnRepositoryInterface } from 'src/modules/returns/domain/contracts/return.repository.interface';
 import { ReturnResponse } from 'src/modules/returns/domain/schemas/dto/response/return.response';
 import { ReturnModel } from 'src/modules/returns/domain/schemas/model/return.model';
-import { CustomHttpException } from 'src/shared/errors/exception/CustomHttpException';
-import { ResourceNotFoundException } from 'src/shared/errors/exception/ResourceNotFoundException';
 import { PrismaService } from 'src/shared/prisma/service/prisma.service';
 
 @Injectable()
@@ -20,10 +19,10 @@ export class ReturnRepositoryPrismaImplementation
         },
       });
       if (returnFound) {
-        throw new CustomHttpException(
-          'The return already exists',
-          statusCode.CONFLICT,
-        );
+        throw new RpcException({
+          statusCode: statusCode.CONFLICT,
+          message: `Return with id_selling ${returnModel.id_selling} already exists`,
+        });
       }
       const createdReturn = await this.prisma.returns.create({
         data: {
@@ -70,10 +69,10 @@ export class ReturnRepositoryPrismaImplementation
         },
       });
       if (!returnItem) {
-        throw new CustomHttpException(
-          'The return was not found',
-          statusCode.NOT_FOUND,
-        );
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Return with id_return ${id_return} not found`,
+        });
       }
       return {
         ...returnItem,
@@ -101,10 +100,10 @@ export class ReturnRepositoryPrismaImplementation
         },
       });
       if (!returns) {
-        throw new CustomHttpException(
-          'The returns were not found',
-          statusCode.NOT_FOUND,
-        );
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Returns not found`,
+        });
       }
       return returns.map((returnItem) => ({
         ...returnItem,
@@ -131,10 +130,10 @@ export class ReturnRepositoryPrismaImplementation
         },
       });
       if (!returnFound) {
-        throw new CustomHttpException(
-          'The return was not found',
-          statusCode.NOT_FOUND,
-        );
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Return with id_return ${id_return} not found`,
+        });
       }
       const updatedReturn = await this.prisma.returns.update({
         where: { id_return },
@@ -163,10 +162,10 @@ export class ReturnRepositoryPrismaImplementation
         },
       });
       if (!returnFound) {
-        throw new CustomHttpException(
-          'The return was not found',
-          statusCode.NOT_FOUND,
-        );
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Return with id_return ${id_return} not found`,
+        });
       }
       await this.prisma.returns.delete({
         where: {

@@ -8,6 +8,8 @@ import { ProductModel } from '../../domain/schemas/model/product.model';
 import { ProductMapper } from '../mappers/product.mapper';
 import { validateFields } from 'src/shared/utils/validators/fields.validators';
 import { BadRequestException } from 'src/shared/errors/exception/BadRequestException';
+import { RpcException } from '@nestjs/microservices';
+import { statusCode } from 'src/settings/environments/status-code';
 
 @Injectable()
 export class ProductUseCaseService implements InterfaceProductUseCaseService {
@@ -37,7 +39,12 @@ export class ProductUseCaseService implements InterfaceProductUseCaseService {
         requiredFields,
       );
       if (missingFieldMessages.length > 0) {
-        throw new BadRequestException(missingFieldMessages);
+        throw new RpcException(
+          {
+            statusCode: statusCode.BAD_REQUEST,
+            message: missingFieldMessages,
+          }
+        )
       }
       const publicPrice: number = this.calculatePublicPrice(
         this.percentage_increment,
@@ -57,15 +64,38 @@ export class ProductUseCaseService implements InterfaceProductUseCaseService {
     product: ProductRequest,
     code: string,
   ): Promise<ProductResponse | null> {
-    const publicPrice: number = this.calculatePublicPrice(
-      this.percentage_increment,
-      product.iva,
-      product.supplier_price,
-    );
-    const productModel: ProductModel = ProductMapper.toModel(product);
-    productModel.percentage_increment = this.percentage_increment;
-    productModel.public_price = publicPrice;
-    return await this.productRepository.updateProduct(productModel, code);
+    try {
+      const requiredFields: string[] = [
+        'code',
+        'description',
+        'iva',
+        'mark',
+        'name',
+        'quantity',
+        'supplier_price',
+      ];
+      const missingFieldMessages: string[] = validateFields(
+        product,
+        requiredFields,
+      );
+      if (missingFieldMessages.length > 0) {
+        throw new RpcException({
+          statusCode: statusCode.BAD_REQUEST,
+          message: missingFieldMessages,
+        });
+      }
+      const publicPrice: number = this.calculatePublicPrice(
+        this.percentage_increment,
+        product.iva,
+        product.supplier_price,
+      );
+      const productModel: ProductModel = ProductMapper.toModel(product);
+      productModel.percentage_increment = this.percentage_increment;
+      productModel.public_price = publicPrice;
+      return await this.productRepository.updateProduct(productModel, code);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async deleteProduct(code: string): Promise<boolean> {

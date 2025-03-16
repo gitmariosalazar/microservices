@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { ProductRepositoryInterface } from 'src/modules/products/domain/contracts/product.repository.interface';
 import { ProductResponse } from 'src/modules/products/domain/schemas/dto/response/product.response';
 import { ProductModel } from 'src/modules/products/domain/schemas/model/product.model';
@@ -18,10 +19,10 @@ export class ProductRepositoryPrismaImplementation
         where: { OR: [{ code: product.code }, { name: product.name }] },
       });
       if (productFound) {
-        throw new CustomHttpException(
-          'Product already exists',
-          statusCode.CONFLICT,
-        );
+        throw new RpcException({
+          statusCode: statusCode.CONFLICT,
+          message: `Product with code ${product.code} or name ${product.name} already exists`,
+        })
       }
       const productCreated = await this.prisma.product.create({
         data: {
@@ -50,7 +51,10 @@ export class ProductRepositoryPrismaImplementation
         where: { code: code },
       });
       if (!productFound) {
-        throw new ResourceNotFoundException('products', 'code', code);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Product with code ${code} not found`,
+        })
       }
       const productUpdated = await this.prisma.product.update({
         where: { code: code },
@@ -77,7 +81,10 @@ export class ProductRepositoryPrismaImplementation
         where: { code: code },
       });
       if (!productFound) {
-        throw new ResourceNotFoundException('products', 'code', code);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Product with code ${code} not found`,
+        });
       }
       await this.prisma.product.delete({ where: { code: code } });
       return true;
@@ -91,7 +98,10 @@ export class ProductRepositoryPrismaImplementation
         where: { code: code },
       });
       if (!productFound) {
-        throw new ResourceNotFoundException('products', 'code', code);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Product with code ${code} not found`,
+        });
       }
       return productFound;
     } catch (error) {
@@ -102,7 +112,10 @@ export class ProductRepositoryPrismaImplementation
     try {
       const products = await this.prisma.product.findMany();
       if (products.length === 0) {
-        throw new ResourceNotFoundException('products');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Products not found`,
+        })
       }
       return products;
     } catch (error) {
@@ -116,7 +129,10 @@ export class ProductRepositoryPrismaImplementation
         where: { SellingItem: { none: {} } },
       });
       if (products.length === 0) {
-        throw new ResourceNotFoundException('products');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Products not found`,
+        });
       }
       return products;
     } catch (error) {
@@ -130,7 +146,10 @@ export class ProductRepositoryPrismaImplementation
         where: { SellingItem: { some: {} } },
       });
       if (products.length === 0) {
-        throw new ResourceNotFoundException('products');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Products not found`,
+        });
       }
       return products;
     } catch (error) {
@@ -144,7 +163,10 @@ export class ProductRepositoryPrismaImplementation
         where: { quantity: { lte: 5 } },
       });
       if (products.length === 0) {
-        throw new ResourceNotFoundException('products');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Products not found`,
+        });
       }
       return products;
     } catch (error) {

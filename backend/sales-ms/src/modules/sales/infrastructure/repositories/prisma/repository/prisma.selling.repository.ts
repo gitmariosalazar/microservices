@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { InterfaceSellingRepository } from 'src/modules/sales/domain/contracts/selling.repository.interface';
 import { SellingAmountResponse } from 'src/modules/sales/domain/schemas/dto/response/selling.amount.response';
 import { SellingResponse } from 'src/modules/sales/domain/schemas/dto/response/selling.response';
@@ -22,7 +23,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!maxSelling) {
-        throw new ResourceNotFoundException('No sales found');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'No sales found',
+        })
       }
       const maxTotal = maxSelling._max.total;
       const selling = await this.prisma.selling.findFirst({
@@ -66,7 +70,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!minSelling) {
-        throw new ResourceNotFoundException('No sales found');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'No sales found',
+        })
       }
       const minTotal = minSelling._min.total;
       const selling = await this.prisma.selling.findFirst({
@@ -115,7 +122,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!sales) {
-        throw new ResourceNotFoundException('No sales found');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'No sales found',
+        })
       }
       return sales.map((selling) => ({
         id_selling: selling.id_selling,
@@ -156,7 +166,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!sales) {
-        throw new ResourceNotFoundException('No sales found');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'No sales found',
+        })
       }
       const total = sales.reduce((acc, selling) => acc + selling.total, 0);
       const sub_total = sales.reduce(
@@ -206,10 +219,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!sellingCreated) {
-        throw new CustomHttpException(
-          'Error creating sale',
-          statusCode.INTERNAL_SERVER_ERROR,
-        );
+        throw new RpcException({
+          statusCode: statusCode.INTERNAL_SERVER_ERROR,
+          message: '`Error creating selling',
+        })
       }
 
       return {
@@ -248,7 +261,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!sellingFound) {
-        throw new ResourceNotFoundException('sales', 'id_selling', id_selling);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Selling with id_selling ${id_selling} not found`,
+        })
       }
       await this.prisma.selling.update({
         where: {
@@ -288,7 +304,10 @@ export class SellingRepositoryPrismaImplementation
         },
       });
       if (!sellingFound) {
-        throw new ResourceNotFoundException('sales', 'id_selling', id_selling);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Selling with id_selling ${id_selling} not found`,
+        })
       }
       await this.prisma.selling.delete({
         where: {
@@ -311,7 +330,10 @@ export class SellingRepositoryPrismaImplementation
       },
     });
     if (!selling) {
-      throw new ResourceNotFoundException('sales', 'id_selling', id_selling);
+      throw new RpcException({
+        statusCode: statusCode.NOT_FOUND,
+        message: `Selling with id_selling ${id_selling} not found`,
+      })
     }
     return {
       id_selling: selling.id_selling,
@@ -342,7 +364,10 @@ export class SellingRepositoryPrismaImplementation
       },
     });
     if (!sales) {
-      throw new ResourceNotFoundException('No sales found');
+      throw new RpcException({
+        statusCode: statusCode.NOT_FOUND,
+        message: 'No sales found',
+      })
     }
     return sales.map((selling) => ({
       id_selling: selling.id_selling,

@@ -13,6 +13,7 @@ import { SellingUseCaseService } from '../../application/services/selling.use-ca
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ApiResponse } from 'src/shared/errors/responses/ApiResponse';
 import { SellingRequest } from '../../domain/schemas/dto/request/selling.request';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('selling')
 @ApiTags('Selling')
@@ -21,91 +22,87 @@ export class SellingController {
 
   @Get('find-all')
   @ApiOperation({ summary: 'Method GET - Find all sales' })
-  async getAllSelling(@Req() request: Request): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-all-selling' })
+  async getAllSelling() {
     const selling = await this.sellingUseCaseService.getAllSelling();
-    return new ApiResponse('Sales found', selling, request.url);
+    return selling;
   }
 
   @Get('find-by-id/:id_selling')
   @ApiOperation({ summary: 'Method GET - Find a sale by id' })
+  @MessagePattern({ cmd: 'find-selling-by-id' })
   async getSellingById(
-    @Req() request: Request,
-    @Param('id_selling', ParseIntPipe) id_selling: number,
-  ): Promise<ApiResponse> {
+    @Payload('id_selling', ParseIntPipe) id_selling: number,
+  ) {
     const selling = await this.sellingUseCaseService.getSellingById(id_selling);
-    return new ApiResponse('Sale found', selling, request.url);
+    return selling;
   }
 
   @Post('create')
   @ApiOperation({ summary: 'Method POST - Create a sale' })
-  async createSelling(
-    @Req() request: Request,
-    @Body() selling: SellingRequest,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'create-selling' })
+  async createSelling(@Payload() selling: SellingRequest) {
     const sellingCreated =
       await this.sellingUseCaseService.createSelling(selling);
-    return new ApiResponse('Sale created', sellingCreated, request.url);
+    return sellingCreated;
   }
 
   @Put('update/:id_selling')
   @ApiOperation({ summary: 'Method PUT - Update a sale' })
+  @MessagePattern({ cmd: 'update-selling' })
   async updateSelling(
-    @Req() request: Request,
-    @Param('id_selling') id_selling: number,
-    @Body() selling: SellingRequest,
-  ): Promise<ApiResponse> {
+    @Payload() payload: { selling: SellingRequest; id_selling: number },
+  ) {
+    const { selling, id_selling } = payload;
     const sellingUpdated = await this.sellingUseCaseService.updateSelling(
       selling,
       id_selling,
     );
-    return new ApiResponse('Sale updated', sellingUpdated, request.url);
+    return sellingUpdated;
   }
 
   @Delete('delete/:id_selling')
   @ApiOperation({ summary: 'Method DELETE - Delete a sale' })
-  async deleteSelling(
-    @Req() request: Request,
-    @Param('id_selling', ParseIntPipe) id_selling: number,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'delete-selling' })
+  async deleteSelling(@Payload('id_selling', ParseIntPipe) id_selling: number) {
     const sellingDeleted =
       await this.sellingUseCaseService.deleteSelling(id_selling);
-    return new ApiResponse('Sale deleted', sellingDeleted, request.url);
+    return sellingDeleted;
   }
 
   @Get('find-greater-selling')
   @ApiOperation({
     summary: 'Method GET - Find the sale with the highest value',
   })
-  async findGreaterSelling(@Req() request: Request): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-greater-selling' })
+  async findGreaterSelling() {
     const selling = await this.sellingUseCaseService.findGreaterSelling();
-    return new ApiResponse('Sale found', selling, request.url);
+    return selling;
   }
 
   @Get('find-less-selling')
   @ApiOperation({ summary: 'Method GET - Find the sale with the lowest value' })
-  async findLessSelling(@Req() request: Request): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-less-selling' })
+  async findLessSelling() {
     const selling = await this.sellingUseCaseService.findLessSelling();
-    return new ApiResponse('Sale found', selling, request.url);
+    return selling;
   }
 
   @Get('find-by-date/:date')
   @ApiOperation({ summary: 'Method GET - Find a sale by date' })
-  async findSellingByDate(
-    @Req() request: Request,
-    @Param('date') date: Date,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-selling-by-date' })
+  async findSellingByDate(@Payload('date') date: Date) {
     const selling = await this.sellingUseCaseService.findSellingByDate(date);
-    return new ApiResponse('Sale found', selling, request.url);
+    return selling;
   }
 
   @Get('find-amount-by-date/:date')
   @ApiOperation({ summary: 'Method GET - Find the amount of sales by date' })
-  async findAmountSellingByDate(
-    @Req() request: Request,
-    @Param('date') date: Date,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-amount-selling-by-date' })
+  async findAmountSellingByDate(@Payload('date') date: Date) {
+    console.log(date);
     const selling =
       await this.sellingUseCaseService.findAmountSellingByDate(date);
-    return new ApiResponse('Sale found', selling, request.url);
+    return selling;
   }
 }

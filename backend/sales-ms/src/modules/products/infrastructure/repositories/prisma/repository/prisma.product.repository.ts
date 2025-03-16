@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RpcException } from '@nestjs/microservices';
 import { ProductRepositoryInterface } from 'src/modules/products/domain/contracts/product.repository.interface';
 import { ProductResponse } from 'src/modules/products/domain/schemas/dto/response/product.response';
 import { ProductModel } from 'src/modules/products/domain/schemas/model/product.model';
@@ -116,11 +117,10 @@ export class ProductRepositoryPrismaImplementation
         where: { id_product: id_product },
       });
       if (!productFound) {
-        throw new ResourceNotFoundException(
-          'products',
-          'id_product',
-          id_product,
-        );
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `Product with id_product ${id_product} not found`,
+        })
       }
       return productFound;
     } catch (error) {

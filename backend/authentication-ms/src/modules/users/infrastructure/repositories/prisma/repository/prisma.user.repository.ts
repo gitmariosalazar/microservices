@@ -3,12 +3,10 @@ import { InterfaceUserRepository } from 'src/modules/users/domain/contracts/user
 import { UserResponse } from 'src/modules/users/domain/schema/dto/response/user.response';
 import { PrismaService } from 'src/shared/prisma/service/prisma.service';
 import { UserAdapter } from '../../../adapters/user.adapter';
-import { ResourceNotFoundException } from 'src/shared/errors/exception/ResourceNotFoundException';
 import { validateFields } from 'src/shared/utils/validators/fields.validators';
-import { BadRequestException } from 'src/shared/errors/exception/BadRequestException';
-import { CustomHttpException } from 'src/shared/errors/exception/CustomHttpException';
 import { statusCode } from 'src/settings/environments/status-code';
 import { UserModel } from 'src/modules/users/domain/schema/model/user.model';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class UserRepositoryPrismaImplementation
@@ -24,7 +22,10 @@ export class UserRepositoryPrismaImplementation
       if (users.length > 0) {
         return users.map(UserAdapter.userModelToUserResponse);
       } else {
-        throw new ResourceNotFoundException('users');
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: 'Users not found',
+        });
       }
     } catch (error) {
       throw error;
@@ -40,7 +41,10 @@ export class UserRepositoryPrismaImplementation
       if (userFound) {
         return UserAdapter.userModelToUserResponse(userFound);
       } else {
-        throw new ResourceNotFoundException('users', 'email', email);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `User with email ${email} not found`,
+        });
       }
     } catch (error) {
       throw error;
@@ -62,7 +66,10 @@ export class UserRepositoryPrismaImplementation
         requiredFields,
       );
       if (missingFieldMessages.length > 0) {
-        throw new BadRequestException(missingFieldMessages);
+        throw new RpcException({
+          message: missingFieldMessages,
+          statusCode: statusCode.BAD_REQUEST,
+        });
       }
       const userFound = await this.prismaService.user.findFirst({
         where: {
@@ -73,10 +80,10 @@ export class UserRepositoryPrismaImplementation
         },
       });
       if (userFound) {
-        throw new CustomHttpException(
-          'User with email or identification already exists',
-          statusCode.CONFLICT,
-        );
+        throw new RpcException({
+          statusCode: statusCode.CONFLICT,
+          message: 'User with email or identification already exists',
+        });
       }
       const userCreated = await this.prismaService.user.create({
         data: userModel,
@@ -90,6 +97,7 @@ export class UserRepositoryPrismaImplementation
     email: string,
     userModel: UserModel,
   ): Promise<UserResponse | null> {
+    console.log(email);
     try {
       const requiredFields = [
         'first_name',
@@ -105,7 +113,10 @@ export class UserRepositoryPrismaImplementation
         requiredFields,
       );
       if (missingFieldMessages.length > 0) {
-        throw new BadRequestException(missingFieldMessages);
+        throw new RpcException({
+          statusCode: statusCode.BAD_REQUEST,
+          message: missingFieldMessages,
+        });
       }
       const userFound = await this.prismaService.user.findFirst({
         where: {
@@ -121,7 +132,10 @@ export class UserRepositoryPrismaImplementation
         });
         return UserAdapter.userModelToUserResponse(userUpdated);
       } else {
-        throw new ResourceNotFoundException('users', 'email', email);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `User with email ${email} not found`,
+        });
       }
     } catch (error) {
       throw error;
@@ -142,7 +156,10 @@ export class UserRepositoryPrismaImplementation
         });
         return true;
       } else {
-        throw new ResourceNotFoundException('users', 'email', email);
+        throw new RpcException({
+          statusCode: statusCode.NOT_FOUND,
+          message: `User with email ${email} not found`,
+        });
       }
     } catch (error) {
       throw error;

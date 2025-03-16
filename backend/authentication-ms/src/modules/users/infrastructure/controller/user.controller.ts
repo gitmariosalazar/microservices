@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { UserUseCaseService } from '../../application/services/user.use-case.service';
-import { ApiResponse } from 'src/shared/errors/responses/ApiResponse';
 import { UserRequest } from '../../domain/schema/dto/request/user.request';
+import { MessagePattern, Payload } from '@nestjs/microservices';
 
 @Controller('users')
 @ApiTags('Users')
@@ -22,49 +22,44 @@ export class UserController {
 
   @Get()
   @ApiOperation({ summary: 'Method GET - Find all users ✅' })
-  async findAllUsers(@Req() request: Request): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-all-users' })
+  async findAllUsers() {
     const users = await this.userService.findAllUsers();
-    return new ApiResponse('Users found successfully', users, request.url);
+    return users;
   }
 
   @Get(':email')
   @ApiOperation({ summary: 'Method GET - Find user by email ✅' })
-  async findUserByEmail(
-    @Req() request: Request,
-    @Param('email') email: string,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'find-user-by-email' })
+  async findUserByEmail(@Payload('email') email: string) {
     const user = await this.userService.findUserByEmail(email);
-    return new ApiResponse('User found successfully', user, request.url);
+    return user;
   }
 
   @Post()
   @ApiOperation({ summary: 'Method POST - Create user ✅' })
-  async createUser(
-    @Req() request: Request,
-    @Body() userRequest: UserRequest,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'create-user' })
+  async createUser(@Body() userRequest: UserRequest) {
     const user = await this.userService.createUser(userRequest);
-    return new ApiResponse('User created successfully', user, request.url);
+    return user;
   }
 
   @Put(':email')
   @ApiOperation({ summary: 'Method PUT - Update user ✅' })
+  @MessagePattern({ cmd: 'update-user' })
   async updateUser(
-    @Req() request: Request,
-    @Param('email') email: string,
-    @Body() userRequest: UserRequest,
-  ): Promise<ApiResponse> {
+    @Payload() payload: { email: string; userRequest: UserRequest },
+  ) {
+    const { email, userRequest } = payload;
     const user = await this.userService.updateUser(email, userRequest);
-    return new ApiResponse('User updated successfully', user, request.url);
+    return user;
   }
 
   @Delete(':email')
   @ApiOperation({ summary: 'Method DELETE - Delete user ✅' })
-  async deleteUser(
-    @Req() request: Request,
-    @Param('email') email: string,
-  ): Promise<ApiResponse> {
+  @MessagePattern({ cmd: 'delete-user' })
+  async deleteUser(@Payload('email') email: string) {
     const user = await this.userService.deleteUser(email);
-    return new ApiResponse('User deleted successfully', user, request.url);
+    return user;
   }
 }

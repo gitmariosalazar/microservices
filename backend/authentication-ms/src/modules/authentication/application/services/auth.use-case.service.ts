@@ -5,12 +5,11 @@ import { RegisterRequest } from '../../domain/schemas/dto/request/register.reque
 import { AuthResponse } from '../../domain/schemas/dto/response/auth.response';
 import { InterfaceUserRepository } from 'src/modules/users/domain/contracts/user.repository.interface';
 import { validateFields } from 'src/shared/utils/validators/fields.validators';
-import { BadRequestException } from 'src/shared/errors/exception/BadRequestException';
-import { CustomHttpException } from 'src/shared/errors/exception/CustomHttpException';
 import { statusCode } from 'src/settings/environments/status-code';
 import { AuthMapper } from '../mappers/auth.mapper';
 import { InterfaceToken } from '../usecases/jwt.interface.token';
 import * as bcrypt from 'bcrypt';
+import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthUseCaseService implements InterfaceAuthUseCaseService {
@@ -27,27 +26,30 @@ export class AuthUseCaseService implements InterfaceAuthUseCaseService {
       const missingFields = validateFields(loginRequest, requiredFields);
 
       if (missingFields.length > 0) {
-        throw new BadRequestException(missingFields);
+        throw new RpcException({
+          statusCode: statusCode.BAD_REQUEST,
+          message: missingFields,
+        })
       }
 
       const user = await this.userRepository.findUserByEmail(
         loginRequest.email,
       );
       if (!user) {
-        throw new CustomHttpException(
-          'Invalid email or password',
-          statusCode.UNAUTHORIZED,
-        );
+        throw new RpcException({
+          statusCode: statusCode.UNAUTHORIZED,
+          message: 'Invalid email or password',
+        })
       }
       const isPasswordValid = await bcrypt.compare(
         loginRequest.password,
         user.password,
       );
       if (!isPasswordValid) {
-        throw new CustomHttpException(
-          'Invalid email or password',
-          statusCode.UNAUTHORIZED,
-        );
+        throw new RpcException({
+          statusCode: statusCode.UNAUTHORIZED,
+          message: 'Invalid email or password',
+        })
       }
       const payload = AuthMapper.userToUserPayload(user);
       const accessToken = this.jwtService.generateToken(payload);
@@ -62,7 +64,7 @@ export class AuthUseCaseService implements InterfaceAuthUseCaseService {
         expire_at: Date.now() + 3600 * 1000,
       };
     } catch (error) {
-      throw error;
+      throw new RpcException(error);
     }
   }
 
@@ -82,13 +84,24 @@ export class AuthUseCaseService implements InterfaceAuthUseCaseService {
       const missingFields = validateFields(registerRequest, requiredFields);
 
       if (missingFields.length > 0) {
-        throw new BadRequestException(missingFields);
+        throw new RpcException({
+          statusCode: statusCode.BAD_REQUEST,
+          message: missingFields,
+        })
       }
       const hashedPassword = await bcrypt.hash(registerRequest.password, 10);
       const user = AuthMapper.RegisterRequestToAuthModel({
         ...registerRequest,
         password: hashedPassword,
       });
+
+      const userFound = await this.userRepository.findUserByEmail(user.email);
+      if (userFound) {
+        throw new RpcException({
+          statusCode: statusCode.CONFLICT,
+          message: 'User already exists with this email: ' + user.email,
+        })
+      }
 
       const userCreated = await this.userRepository.createUser(user);
       const payload = AuthMapper.userToUserPayload(userCreated);
@@ -104,7 +117,7 @@ export class AuthUseCaseService implements InterfaceAuthUseCaseService {
         expire_at: Date.now() + 3600 * 1000,
       };
     } catch (error) {
-      throw error;
+      throw new RpcException(error);
     }
   }
 }

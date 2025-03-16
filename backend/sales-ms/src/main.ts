@@ -4,6 +4,7 @@ import * as morgan from 'morgan';
 import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { environments } from './settings/environments/environments';
+import { Transport } from '@nestjs/microservices';
 
 async function bootstrap() {
   const logger: Logger = new Logger('Main');
@@ -24,9 +25,19 @@ async function bootstrap() {
     customCssUrl:
       'https://mariosalazar-styles-swagger-ui.vercel.app/css/swagger-ui.css',
   });
-  await app.listen(environments.serverPort ?? 3000);
+  await app.listen(4003);
   logger.log(
-    `This API is running on: http://127.0.0.1:${environments.serverPort || 3000}`,
+    `This API is running on: http://127.0.0.1:${4003}`,
+  );
+  const microservices = await NestFactory.createMicroservice(AppModule, {
+    transport: Transport.TCP,
+    options: {
+      port: environments.serverPort,
+    },
+  });
+  await microservices.listen();
+  logger.log(
+    `This microservice is running on port: ${environments.serverPort}`,
   );
 }
 bootstrap();
