@@ -90,6 +90,7 @@ create database microservices
 ```
 - Restore database
 ```bash
+$ mysql -u root -p <database name> < "<Path>\microservices\backup\microservices.sql"
 ```
 
 ## 📂 Project Structure for the microservices
