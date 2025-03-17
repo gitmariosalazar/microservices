@@ -112,7 +112,6 @@ export class SellingRepositoryPrismaImplementation
   async findSellingByDate(date: Date): Promise<SellingResponse[]> {
     try {
       const isoDate = new Date(date).toISOString();
-      console.log(isoDate);
       const sales = await this.prisma.selling.findMany({
         where: {
           selling_date: isoDate,
@@ -121,7 +120,7 @@ export class SellingRepositoryPrismaImplementation
           SellingItem: true,
         },
       });
-      if (!sales) {
+      if (!sales || sales.length === 0) {
         throw new RpcException({
           statusCode: statusCode.NOT_FOUND,
           message: 'No sales found',
@@ -165,7 +164,7 @@ export class SellingRepositoryPrismaImplementation
           SellingItem: true,
         },
       });
-      if (!sales) {
+      if (!sales || sales.length === 0) {
         throw new RpcException({
           statusCode: statusCode.NOT_FOUND,
           message: 'No sales found',

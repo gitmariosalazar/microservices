@@ -100,7 +100,6 @@ export class SellingController {
   @ApiOperation({ summary: 'Method GET - Find the amount of sales by date' })
   @MessagePattern({ cmd: 'find-amount-selling-by-date' })
   async findAmountSellingByDate(@Payload('date') date: Date) {
-    console.log(date);
     const selling =
       await this.sellingUseCaseService.findAmountSellingByDate(date);
     return selling;
